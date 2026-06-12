@@ -1,32 +1,35 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# This script bootstraps an ai-builder VM with required tools and dependencies.
-# It assumes Ansible is installed locally and the target host is configured in inventory.
-
-set -e
+INVENTORY="infra/ansible/inventory/hosts.ini"
+PLAYBOOK="infra/ansible/playbooks/bootstrap-builder.yml"
+TARGET_HOST="${1:-all}"
+ASK_BECOME_PASS="${ASK_BECOME_PASS:-false}"
 
 echo "Bootstrapping ai-builder VM..."
-echo "================================"
+echo "Target host: ${TARGET_HOST}"
 
-# Check if ansible is installed
-if ! command -v ansible &> /dev/null; then
-    echo "Error: Ansible is not installed. Please install Ansible first."
-    exit 1
+if ! command -v ansible-playbook >/dev/null 2>&1; then
+  echo "Error: ansible-playbook is not installed on this machine."
+  exit 1
 fi
 
-# Get target host from arguments or use default inventory
-TARGET_HOST="${1:-all}"
+if [ ! -f "$INVENTORY" ]; then
+  echo "Error: inventory file not found: $INVENTORY"
+  echo "Create it from: infra/ansible/inventory/hosts.example.ini"
+  exit 1
+fi
 
-echo "Target host: $TARGET_HOST"
+EXTRA_ARGS=()
+if [ "$ASK_BECOME_PASS" = "true" ]; then
+  EXTRA_ARGS+=(--ask-become-pass)
+fi
 
-# Run the bootstrap playbook
-ansible-playbook infra/ansible/playbooks/bootstrap-builder.yml -i infra/ansible/inventory/hosts.ini -l "$TARGET_HOST"
+EXTRA_ARGS=()
+if [ "$ASK_BECOME_PASS" = "true" ]; then
+  EXTRA_ARGS+=(--ask-become-pass)
+fi
 
-echo "Bootstrap complete!"
-echo ""
-echo "Please verify the following tools are installed:"
-echo "- aider"
-echo "- gh"
-echo "- uv"
-echo "- git"
-echo "- ansible"
+ANSIBLE_ROLES_PATH=infra/ansible/roles ansible-playbook "$PLAYBOOK" -i "$INVENTORY" -l "$TARGET_HOST" "${EXTRA_ARGS[@]}" "${EXTRA_ARGS[@]}"
+
+echo "Bootstrap complete."

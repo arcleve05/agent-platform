@@ -1,11 +1,12 @@
 ---
 - name: Update apt cache
-  apt:
-    update_cache: yes
   become: yes
+  ansible.builtin.apt:
+    update_cache: yes
 
-- name: Install system packages
-  apt:
+- name: Install base system packages
+  become: yes
+  ansible.builtin.apt:
     name:
       - git
       - curl
@@ -17,38 +18,69 @@
       - python3-venv
       - pipx
       - ansible
+      - ca-certificates
+      - gnupg
     state: present
-  become: yes
 
-- name: Check if gh is installed via apt
-  command: which gh
+- name: Check if GitHub CLI is installed
+  ansible.builtin.command: which gh
   register: gh_check
-  ignore_errors: yes
+  changed_when: false
+  failed_when: false
 
-- name: Install GitHub CLI from official repository if not available
-  shell: |
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-    sudo apt update
-    sudo apt install -y gh
-  when: gh_check.rc != 0
+- name: Add GitHub CLI apt key
   become: yes
-
-- name: Install uv using official installer script
-  shell: |
-    curl -LsSf https://astral.sh/uv/install.sh | sh
+  ansible.builtin.shell: |
+    set -e
+    mkdir -p /usr/share/keyrings
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+      | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
   args:
-    creates: ~/.local/bin/uv
+    creates: /usr/share/keyrings/githubcli-archive-keyring.gpg
+  when: gh_check.rc != 0
 
-- name: Install aider-chat using uv
-  shell: |
-    uv tool install aider-chat
-  args:
-    creates: ~/.local/bin/aider
+- name: Add GitHub CLI apt repository
+  become: yes
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/github-cli.list
+    content: "deb [arch={{ ansible_architecture | regex_replace('x86_64', 'amd64') }} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main\n"
+    mode: "0644"
+  when: gh_check.rc != 0
 
-- name: Ensure ~/.local/bin and ~/.cargo/bin are in PATH
-  lineinfile:
-    path: ~/.bashrc
+- name: Install GitHub CLI
+  become: yes
+  ansible.builtin.apt:
+    name: gh
+    state: present
+    update_cache: yes
+  when: gh_check.rc != 0
+
+- name: Ensure user local bin is on PATH
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
     line: 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"'
     create: yes
-  become: yes
+    mode: "0644"
+
+- name: Install uv
+  ansible.builtin.shell: |
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/bin/uv"
+
+- name: Install aider-chat with uv
+  ansible.builtin.shell: |
+    {{ ansible_env.HOME }}/.local/bin/uv tool install aider-chat
+  args:
+    creates: "{{ ansible_env.HOME }}/.local/bin/aider"
+
+- name: Verify builder tools
+  ansible.builtin.shell: |
+    set -e
+    git --version
+    gh --version
+    ansible --version
+    {{ ansible_env.HOME }}/.local/bin/uv --version
+    {{ ansible_env.HOME }}/.local/bin/aider --version
+  changed_when: false

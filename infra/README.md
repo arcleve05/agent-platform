@@ -1,20 +1,31 @@
 # Infrastructure
 
-This directory contains infrastructure-as-code for provisioning ai-builder VMs.
+Infrastructure-as-code for building disposable Agent Platform VMs.
+
+## Current Scope
+
+This first layer provisions future `ai-builder` VMs.
+
+The builder VM is used for:
+- Aider-assisted development
+- Git/GitHub work
+- Ansible playbook development
+- Platform bootstrap work
+
+It does not install Open WebUI, LiteLLM, Docker, or control-plane services.
 
 ## Files
 
-- `ansible/inventory/hosts.example.ini` - Example inventory file for builder VMs
-- `ansible/playbooks/bootstrap-builder.yml` - Main playbook to bootstrap builder VMs
-- `ansible/roles/builder_base/tasks/main.yml` - Base tasks for builder VM setup
-- `scripts/bootstrap-builder.sh` - Convenience script to run the bootstrap playbook
+- `ansible/inventory/hosts.example.ini` — example inventory
+- `ansible/playbooks/bootstrap-builder.yml` — builder bootstrap playbook
+- `ansible/roles/builder_base/tasks/main.yml` — builder setup tasks
+- `scripts/bootstrap-builder.sh` — wrapper script
 
 ## Workflow
 
 1. Create a fresh Ubuntu VM manually.
 2. Enable SSH.
-3. Add the VM to inventory (`infra/ansible/inventory/hosts.ini`).
-4. Run `./bootstrap-builder.sh [target-host]`.
-5. Confirm aider, gh, uv, git, and ansible are installed.
+3. Copy the example inventory:
 
-The bootstrap script is safe to run multiple times.
+   ```bash
+   cp infra/ansible/inventory/hosts.example.ini infra/ansible/inventory/hosts.ini
