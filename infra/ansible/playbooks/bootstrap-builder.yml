@@ -2,7 +2,5 @@
 - name: Bootstrap ai-builder VM
   hosts: all
   become: yes
-  vars:
-    ansible_user: "{{ ansible_user }}"
   roles:
     - builder_base
