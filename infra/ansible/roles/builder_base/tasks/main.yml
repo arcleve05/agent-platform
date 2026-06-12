@@ -1,0 +1,28 @@
+---
+- name: Install base packages
+  apt:
+    name:
+      - git
+      - curl
+      - wget
+      - unzip
+      - build-essential
+      - python3
+      - python3-pip
+      - python3-venv
+      - pipx
+      - gh
+      - ansible
+      - uv
+      - aider-chat
+    state: present
+    update_cache: yes
+
+- name: Ensure pipx is available in PATH
+  lineinfile:
+    path: /home/{{ ansible_user }}/.bashrc
+    line: 'export PATH="$HOME/.local/bin:$PATH"'
+    create: yes
+
+- name: Reload bashrc to update PATH
+  shell: source ~/.bashrc
