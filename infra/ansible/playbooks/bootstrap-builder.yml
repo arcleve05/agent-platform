@@ -1,35 +1,8 @@
 ---
 - name: Bootstrap ai-builder VM
-  hosts: builder
+  hosts: all
   become: yes
   vars:
-    builder_base_packages:
-      - git
-      - curl
-      - wget
-      - unzip
-      - build-essential
-      - python3
-      - python3-pip
-      - python3-venv
-      - pipx
-      - gh
-      - ansible
-      - uv
-      - aider-chat
-
-  tasks:
-    - name: Install base packages
-      apt:
-        name: "{{ builder_base_packages }}"
-        state: present
-        update_cache: yes
-
-    - name: Ensure pipx is available in PATH
-      lineinfile:
-        path: /home/{{ ansible_user }}/.bashrc
-        line: 'export PATH="$HOME/.local/bin:$PATH"'
-        create: yes
-
-    - name: Reload bashrc to update PATH
-      shell: source ~/.bashrc
+    ansible_user: "{{ ansible_user }}"
+  roles:
+    - builder_base

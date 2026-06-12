@@ -1,5 +1,10 @@
 ---
-- name: Install base packages
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: yes
+
+- name: Install system packages
   apt:
     name:
       - git
@@ -11,18 +16,39 @@
       - python3-pip
       - python3-venv
       - pipx
-      - gh
       - ansible
-      - uv
-      - aider-chat
     state: present
-    update_cache: yes
+  become: yes
 
-- name: Ensure pipx is available in PATH
+- name: Check if gh is installed via apt
+  command: which gh
+  register: gh_check
+  ignore_errors: yes
+
+- name: Install GitHub CLI from official repository if not available
+  shell: |
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt update
+    sudo apt install -y gh
+  when: gh_check.rc != 0
+  become: yes
+
+- name: Install uv using official installer script
+  shell: |
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  args:
+    creates: ~/.local/bin/uv
+
+- name: Install aider-chat using uv
+  shell: |
+    uv tool install aider-chat
+  args:
+    creates: ~/.local/bin/aider
+
+- name: Ensure ~/.local/bin and ~/.cargo/bin are in PATH
   lineinfile:
-    path: /home/{{ ansible_user }}/.bashrc
-    line: 'export PATH="$HOME/.local/bin:$PATH"'
+    path: ~/.bashrc
+    line: 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"'
     create: yes
-
-- name: Reload bashrc to update PATH
-  shell: source ~/.bashrc
+  become: yes
