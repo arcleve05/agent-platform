@@ -58,6 +58,12 @@ echo "  git config --global user.name \"Andrew Cleveland\""
 echo "  git config --global user.email \"aross.cleveland@gmail.com\""
 echo "  gh auth login"
 
+
+echo
+echo "Running builder validation..."
+./infra/scripts/validate-builder.sh
+
 touch "$HOME/.agent-platform-bootstrap-complete"
+
 
 touch "$HOME/.agent-platform-bootstrap-complete"
