@@ -38,6 +38,14 @@ if ! git config --global user.email >/dev/null 2>&1; then
   echo 'git config --global user.email "aross.cleveland@gmail.com"'
 fi
 
+
+if command -v gh >/dev/null 2>&1 && ! gh auth status >/dev/null 2>&1; then
+  echo
+  echo "GitHub CLI is not authenticated."
+  echo "Run:"
+  echo "  gh auth login"
+fi
+
 echo
 echo "Host bootstrap complete."
 echo "If 'aider' is not found, run:"
