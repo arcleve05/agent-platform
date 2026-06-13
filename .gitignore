@@ -1,2 +1,3 @@
 .aider*
 infra/ansible/inventory/hosts.ini
+infra/ansible/inventory/hosts.ini
