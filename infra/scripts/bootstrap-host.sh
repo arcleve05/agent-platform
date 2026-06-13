@@ -29,6 +29,15 @@ fi
 
 ASK_BECOME_PASS="${ASK_BECOME_PASS:-true}" ./infra/scripts/bootstrap-builder.sh
 
+
+if ! git config --global user.email >/dev/null 2>&1; then
+  echo
+  echo "Git identity not configured."
+  echo "Run:"
+  echo 'git config --global user.name "Andrew Cleveland"'
+  echo 'git config --global user.email "aross.cleveland@gmail.com"'
+fi
+
 echo
 echo "Host bootstrap complete."
 echo "If 'aider' is not found, run:"
