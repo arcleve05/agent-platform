@@ -40,3 +40,5 @@ echo "Optional next steps:"
 echo "  git config --global user.name \"Andrew Cleveland\""
 echo "  git config --global user.email \"aross.cleveland@gmail.com\""
 echo "  gh auth login"
+
+touch "$HOME/.agent-platform-bootstrap-complete"
